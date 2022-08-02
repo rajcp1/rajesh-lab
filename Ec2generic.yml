@@ -1,0 +1,803 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation to create an Amazon EC2 instance
+
+Parameters:
+
+  OperatingClass:
+    Description: The OperatingClass
+    Type: String
+    AllowedValues:
+    - Windows
+    - Linux
+
+  OperatingSystemType:
+    Description: The OperatingSystem type
+    Type: String
+    AllowedValues:
+    - win2016
+    - win2019
+    - win2012
+    - rhel7
+    - rhel8
+    - Amazlinux
+    - ubuntu16
+    - ubuntu18
+    - ubuntu20
+    - centos8
+
+  RootVolume:
+    Description: Choose the Root Volume size appropriately. This cannot be changed at a later time.
+    Type: String
+    Default: 60
+    AllowedValues:
+    - 60
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    - 400
+    - 450
+    - 500
+    - 600
+    - 700
+    - 800
+    - 900
+    - 1000
+
+  DataVolume1:
+    Description: Enter additional Volume2 Size
+    Type: String
+    Default: NotRequired
+    AllowedValues:
+    - NotRequired
+    - 50
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    - 400
+    - 450
+    - 500
+    - 600
+    - 700
+    - 800
+    - 900
+    - 1000
+
+  DataVolume2:
+    Description: Enter additional Volume2 Size
+    Type: String
+    Default: NotRequired
+    AllowedValues:
+    - NotRequired
+    - 50
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    - 400
+    - 450
+    - 500
+    - 600
+    - 700
+    - 800
+    - 900
+    - 1000
+
+  DataVolume3:
+    Description: Enter additional Volume3 Size
+    Type: String
+    Default: NotRequired
+    AllowedValues:
+    - NotRequired
+    - 50
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    - 400
+    - 450
+    - 500
+    - 600
+    - 700
+    - 800
+    - 900
+    - 1000
+
+  DataVolume4:
+    Description: Enter additional Volume4 Size
+    Type: String
+    Default: NotRequired
+    AllowedValues:
+    - NotRequired
+    - 50
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    - 400
+    - 450
+    - 500
+    - 600
+    - 700
+    - 800
+    - 900
+    - 1000
+
+  DataVolume5:
+    Description: Enter additional Volume5 Size
+    Type: String
+    Default: NotRequired
+    AllowedValues:
+    - NotRequired
+    - 50
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    - 400
+    - 450
+    - 500
+    - 600
+    - 700
+    - 800
+    - 900
+    - 1000
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+        
+
+
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: The list of SecurityGroupIds in your Virtual Private Cloud (VPC)
+    AllowedPattern: '.+'
+
+  SubnetIds:
+    Type: AWS::EC2::Subnet::Id
+    Description: The list of Subnets in your Virtual Private Cloud (VPC)
+    AllowedPattern: '.+'
+
+  ApplicationName:
+    Type: String
+    Description: Type the Name of Applicaton to be installed
+    Default: Provide-the-name-of-the-application
+
+  Environment:
+    Type: String
+    AllowedValues:
+    - Production
+    - Test
+    - Development
+    - Training
+    - Sandbox
+
+  InstanceName:
+    Type: String
+    Description: Type the Name of the server
+    AllowedPattern: '.+'
+    ConstraintDescription: This will be used for naming the server. Provide an appropriate value.
+
+  Ec2Maintanence:
+    Description: EC2 instance Power-off-On-ScheduleExpression
+    Type: String
+    AllowedValues:
+    - m-f-8am-6pm
+    - m-f-1am-6pm
+    - mon-fri-24x7
+    - sun-fri-24x7-10am-start
+    - sun-fri-24x7-1am-start
+    - NotApplicable
+    - fri-sun-24x7-6pm-10pm start
+
+  SystemOwner:
+    Type: String
+    Default: Provide-the-name-of-the-system-owner
+
+  SystemAdmin:
+    Type: String
+    Default: Provide-the-name-of-the-system-admin
+
+  RPOParameter:
+    Description: Sandbox RPO can be set to NotRequired
+    Type: String
+    Default: Bronze
+    AllowedValues:
+    - Bronze
+    - Silver
+    - Gold
+    - Platinum
+    - NotRequired
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: EC2Instance and Network Configurations
+        Parameters:
+          - InstanceName
+          - InstanceType
+          - OperatingClass
+          - OperatingSystemType
+          - SubnetIds
+          - SecurityGroupIds
+      - Label:
+          default: EC2 Instance Disk Configurations
+        Parameters:
+          - RootVolume
+          - DataVolume1
+          - DataVolume2
+          - DataVolume3
+          - DataVolume4
+          - DataVolume5
+      - Label:
+          default: EC2 Instance Management
+        Parameters:
+          - ApplicationName
+          - Environment
+          - SystemOwner
+          - SystemAdmin
+          - RPOParameter
+          - Ec2Maintanence
+
+Mappings:
+
+  OSTypeToAMIID:
+    win2016:
+      AMI: ImageBuilder-Org-Latest-win2016
+    win2019:
+      AMI: ImageBuilder-Org-Latest-win2019
+    win2012:
+      AMI: ImageBuilder-Org-Latest-win2012
+    rhel7:
+      AMI: ImageBuilder-Org-Latest-rhel7
+    rhel8:
+      AMI: ImageBuilder-Org-Latest-rhel8
+    Amazlinux:
+      AMI: ImageBuilder-Org-Latest-amazonlinux2
+    ubuntu16:
+      AMI: ImageBuilder-Org-Latest-ubuntu16
+    ubuntu18:
+      AMI: ImageBuilder-Org-Latest-ubuntu18
+    ubuntu20:
+      AMI: ImageBuilder-Org-Latest-ubuntu20
+    centos8:
+      AMI: ImageBuilder-Org-Latest-centos8
+
+  DomainType:
+    win2016:
+      SSM: Windows-domain
+    win2019:
+      SSM: Windows-domain
+    win2012:
+      SSM: Windows-domain
+    rhel7:
+      SSM: Linux-domain
+    rhel8:
+      SSM: Linux8-domain
+    Amazlinux:
+      SSM: Linux-domain
+    ubuntu16:
+      SSM: Ubuntu-domain
+    ubuntu18:
+      SSM: Ubuntu-domain
+    ubuntu20:
+      SSM: Ubuntu-domain
+    centos8:
+      SSM: Centos-domain
+
+
+  IOSPatching:
+    Windows:
+      Production: NotApplicable
+      Test: NotApplicable
+      Development: NotApplicable
+      Training: NotApplicable
+      Sandbox: NotApplicable
+    Linux:
+      Production: LinuxProduction
+      Test: LinuxTest
+      Development: LinuxDevelopment
+      Training: LinuxTest
+      Sandbox: LinuxDevelopment
+
+Conditions:
+  DataVolume1:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: DataVolume1
+      - NotRequired
+
+  DataVolume2:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: DataVolume2
+      - NotRequired
+
+  DataVolume3:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: DataVolume3
+      - NotRequired
+
+  DataVolume4:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: DataVolume4
+      - NotRequired
+
+  DataVolume5:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: DataVolume5
+      - NotRequired
+
+  Amazon:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: OperatingSystemType
+      - Amazlinux
+
+  IsWindows: !Equals [ !Ref OperatingClass, "Windows" ]
+
+  IsUnix: !Equals [ !Ref OperatingClass, "Linux"]
+
+Resources:
+
+  RootRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ${InstanceName}-Instancerole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy'
+        - 'arn:aws:iam::aws:policy/CloudWatchFullAccess'
+        - 'arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy'
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - 'arn:aws:iam::aws:policy/AmazonSSMDirectoryServiceAccess'
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM'
+        - 'arn:aws:iam::aws:policy/AmazonInspectorFullAccess'
+
+  InstanceInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      InstanceProfileName: !Sub ${InstanceName}-InstanceProfile
+      Roles:
+        - !Ref RootRole
+
+  InstancePermissionsPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: !Sub ${InstanceName}-InstancePermissionsPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - 'cloudwatch:PutMetricAlarm'
+              - 'kms:Decrypt'
+              - 'ec2:DescribeInstances'
+              - 'ec2:CreateTags'
+            Resource: "*"
+      Roles:
+        - Ref: "RootRole"
+
+  getlatestAMI:
+    Type: Custom::getlatestAMI
+    Properties:
+      ssmkey:
+        Fn::FindInMap:
+        - OSTypeToAMIID
+        - Ref: OperatingSystemType
+        - AMI
+      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:CFN-SSM-GetParam"
+
+  WindowsEC2Instance:
+    Condition: IsWindows
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Fn::GetAtt:
+        - getlatestAMI
+        - ssmvalue
+      InstanceType:
+        Ref: InstanceType
+      SubnetId:
+        Ref: SubnetIds
+      SecurityGroupIds:
+        Ref: SecurityGroupIds
+      BlockDeviceMappings:
+      - DeviceName:
+          Fn::If:
+          - Amazon
+          - "/dev/sda1"
+          - "/dev/xvda"
+        Ebs:
+          VolumeType: gp3
+          VolumeSize:
+            Ref: RootVolume
+          Encrypted: 'True'
+      IamInstanceProfile: !Ref InstanceInstanceProfile
+      InstanceInitiatedShutdownBehavior: stop
+      UserData:
+          'Fn::Base64': !Sub |
+              <powershell>
+                Set-PSDebug -Trace 1
+                $ec2_name = hostname
+                Write-Output  "Local hostname found:$ec2_name"
+                $hostNameFromTag = '${InstanceName}'
+                Write-Output  "Local hostname found:$hostNameFromTag"
+                if (!$hostNameFromTag) {
+                    Write-Output  "tags not found or permission denied. exiting"
+                    exit 1
+                }
+                Write-Output  "Hostname required:$hostNameFromTag"
+
+                if ($ec2_name -ne $hostNameFromTag){
+                  Write-Output  "The name set in the instance is different from the name from EC2 tags.."
+                  Write-Output  "current name is $ec2_name, but the name from tag is $hostNameFromTag"
+                  Write-Output  "Initiating the name change.."
+
+                  try {
+                    Rename-Computer -NewName $hostNameFromTag -Force -ErrorAction Stop
+                  }
+                    catch {
+                      Write-Output  "An error occurred:"
+                      Write-Output  $_.ScriptStackTrace
+                      Write-Output  $PSItem.Exception.Message
+                      exit 1
+                    }
+                  Write-Output  "Restarting to effect the name change.."
+                  shutdown /r /f /t 0
+                }
+
+                else {
+                  Write-Output  "The name set in the instance is same as the name from the name from EC2 tags.."
+                }
+              #cfn-init.exe -v --stack=${AWS::StackId} --resource=WindowsEC2Instance --region=${AWS::Region} --configsets=setupcfnhup,renamehost,domainjoin,sendsignal
+              </powershell>
+
+      Tags:
+      - Key: Application
+        Value:
+          Ref: ApplicationName
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Name
+        Value:
+          Ref: InstanceName
+      - Key: RPO
+        Value:
+          Ref: RPOParameter
+      - Key: System Owner
+        Value:
+          Ref: SystemOwner
+      - Key: System Admin
+        Value:
+          Ref: SystemAdmin
+      - Key: Domain
+        Value:
+          Fn::FindInMap:
+          - DomainType
+          - Ref: OperatingSystemType
+          - SSM
+      - Key: shutdownschedule
+        Value:
+          Ref: Ec2Maintanence
+      - Key: OS
+        Value:
+          Ref: OperatingSystemType
+      - Key: EC2Createdby
+        Value: dept-SNServiceCatalog
+      - Key: AmiID
+        Value:
+          Fn::FindInMap:
+          - OSTypeToAMIID
+          - Ref: OperatingSystemType
+          - AMI
+      - Key: OperatingClass
+        Value:
+          Ref: OperatingClass
+
+  LinuxEC2Instance:
+    Condition: IsUnix
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Fn::GetAtt:
+        - getlatestAMI
+        - ssmvalue
+      InstanceType:
+        Ref: InstanceType
+      SubnetId:
+        Ref: SubnetIds
+      SecurityGroupIds:
+        Ref: SecurityGroupIds
+      BlockDeviceMappings:
+      - DeviceName:
+          Fn::If:
+          - Amazon
+          - "/dev/sda1"
+          - "/dev/xvda"
+        Ebs:
+          VolumeType: gp3
+          VolumeSize: !Ref RootVolume
+          Encrypted: 'True'
+      IamInstanceProfile: !Ref InstanceInstanceProfile
+      InstanceInitiatedShutdownBehavior: stop
+      UserData:
+          'Fn::Base64': !Sub |
+              #!/bin/bash
+              #INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+              #NAME_FROM_TAG=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=Name" --region=${AWS::Region} --output=text | cut -f5)
+              HOST_NAME=$(hostname)
+              NAME_FROM_TAG=${InstanceName}
+              if [ -z "$NAME_FROM_TAG" ]
+              then
+                    echo "no name set in tags..exiting"
+                        exit 0
+              else
+                    if [ $NAME_FROM_TAG != $HOST_NAME ]
+                        then
+                              echo "name changing.."
+                              hostnamectl set-hostname $NAME_FROM_TAG
+                        fi
+              fi
+              # /opt/aws/bin/cfn-init -v -s ${AWS::StackId} -r LinuxEC2Instance --region ${AWS::Region} -c setupcfnhup,renamehost,domainjoin
+              # /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource LinuxEC2Instance --region ${AWS::Region}
+      Tags:
+      - Key: Application
+        Value:
+          Ref: ApplicationName
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Name
+        Value:
+          Ref: InstanceName
+      - Key: RPO
+        Value:
+          Ref: RPOParameter
+      - Key: System Owner
+        Value:
+          Ref: SystemOwner
+      - Key: System Admin
+        Value:
+          Ref: SystemAdmin
+      - Key: Domain
+        Value:
+          Fn::FindInMap:
+          - DomainType
+          - Ref: OperatingSystemType
+          - SSM
+      - Key: Patch Group
+        Value:
+          Fn::FindInMap:
+          - IOSPatching
+          - Ref: OperatingClass
+          - Ref: Environment
+      - Key: shutdownschedule
+        Value:
+          Ref: Ec2Maintanence
+      - Key: OS
+        Value:
+          Ref: OperatingSystemType
+      - Key: EC2Createdby
+        Value: dept-ServiceCatalog
+      - Key: AmiID
+        Value:
+          Fn::FindInMap:
+          - OSTypeToAMIID
+          - Ref: OperatingSystemType
+          - AMI
+      - Key: OperatingClass
+        Value:
+          Ref: OperatingClass
+
+  Volume1:
+    Type: AWS::EC2::Volume
+    Condition: DataVolume1
+    DeletionPolicy: Delete
+    Properties:
+      VolumeType: gp3
+      Size:
+        Ref: DataVolume1
+      Encrypted: 'True'
+      AvailabilityZone: !If [ IsUnix, !GetAtt LinuxEC2Instance.AvailabilityZone, !GetAtt WindowsEC2Instance.AvailabilityZone ]
+      Tags:
+      - Key: Name
+        Value:
+          Ref: InstanceName
+      - Key: InstanceId
+        Value: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+
+  AttachVolume1:
+    Type: AWS::EC2::VolumeAttachment
+    Condition: DataVolume1
+    Properties:
+      Device:
+        Fn::If:
+        - Amazon
+        - "/dev/sdk"
+        - "/dev/xvdb"
+      InstanceId: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+      VolumeId:
+        Ref: Volume1
+
+  Volume2:
+    Type: AWS::EC2::Volume
+    Condition: DataVolume2
+    DeletionPolicy: Delete
+    Properties:
+      VolumeType: gp3
+      Size:
+        Ref: DataVolume2
+      Encrypted: 'True'
+      AvailabilityZone: !If [ IsUnix, !GetAtt LinuxEC2Instance.AvailabilityZone, !GetAtt WindowsEC2Instance.AvailabilityZone ]
+      Tags:
+      - Key: Name
+        Value:
+          Ref: InstanceName
+      - Key: InstanceId
+        Value: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+
+  AttachVolume2:
+    Type: AWS::EC2::VolumeAttachment
+    Condition: DataVolume2
+    Properties:
+      Device:
+        Fn::If:
+        - Amazon
+        - "/dev/sdj"
+        - "/dev/xvdc"
+      InstanceId: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+      VolumeId:
+        Ref: Volume2
+
+  Volume3:
+    Type: AWS::EC2::Volume
+    Condition: DataVolume3
+    DeletionPolicy: Delete
+    Properties:
+      VolumeType: gp3
+      Size:
+        Ref: DataVolume3
+      Encrypted: 'True'
+      AvailabilityZone: !If [ IsUnix, !GetAtt LinuxEC2Instance.AvailabilityZone, !GetAtt WindowsEC2Instance.AvailabilityZone ]
+      Tags:
+      - Key: Name
+        Value:
+          Ref: InstanceName
+      - Key: InstanceId
+        Value: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+
+  AttachVolume3:
+    Type: AWS::EC2::VolumeAttachment
+    Condition: DataVolume3
+    Properties:
+      Device:
+        Fn::If:
+        - Amazon
+        - "/dev/sdd"
+        - "/dev/xvdd"
+      InstanceId: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+      VolumeId:
+        Ref: Volume3
+
+  Volume4:
+    Type: AWS::EC2::Volume
+    Condition: DataVolume4
+    DeletionPolicy: Delete
+    Properties:
+      VolumeType: gp3
+      Size:
+        Ref: DataVolume4
+      Encrypted: 'True'
+      AvailabilityZone: !If [ IsUnix, !GetAtt LinuxEC2Instance.AvailabilityZone, !GetAtt WindowsEC2Instance.AvailabilityZone ]
+      Tags:
+      - Key: Name
+        Value:
+          Ref: InstanceName
+      - Key: InstanceId
+        Value: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+
+  AttachVolume4:
+    Type: AWS::EC2::VolumeAttachment
+    Condition: DataVolume4
+    Properties:
+      Device:
+        Fn::If:
+        - Amazon
+        - "/dev/sde"
+        - "/dev/xvde"
+      InstanceId: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+      VolumeId:
+        Ref: Volume4
+
+  Volume5:
+    Type: AWS::EC2::Volume
+    Condition: DataVolume5
+    DeletionPolicy: Delete
+    Properties:
+      VolumeType: gp3
+      Size:
+        Ref: DataVolume5
+      Encrypted: 'True'
+      AvailabilityZone: !If [ IsUnix, !GetAtt LinuxEC2Instance.AvailabilityZone, !GetAtt WindowsEC2Instance.AvailabilityZone ]
+      Tags:
+      - Key: Name
+        Value:
+          Ref: InstanceName
+      - Key: InstanceId
+        Value: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+
+  AttachVolume5:
+    Type: AWS::EC2::VolumeAttachment
+    Condition: DataVolume5
+    Properties:
+      Device:
+        Fn::If:
+        - Amazon
+        - "/dev/sdf"
+        - "/dev/xvdf"
+      InstanceId: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+      VolumeId:
+        Ref: Volume5
+
+  StatusCheckAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Trigger an Alaram when instance status check failed on instance for 10
+        consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      AlarmName: !Join [ ":" ,[!Ref 'InstanceName', !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ], Ec2StatusCheck]]
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: '1'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '0'
+      AlarmActions:
+        - !Sub arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:dept-Ec2HealthCheck
+      Dimensions:
+      - Name: InstanceId
+        Value: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+
+
+Outputs:
+
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !If [ IsUnix, !Ref LinuxEC2Instance, !Ref WindowsEC2Instance ]
+
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !If [ IsUnix, !GetAtt LinuxEC2Instance.AvailabilityZone, !GetAtt WindowsEC2Instance.AvailabilityZone ]
+
+  PrivateIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !If [ IsUnix, !GetAtt LinuxEC2Instance.PrivateIp, !GetAtt WindowsEC2Instance.PrivateIp ]
