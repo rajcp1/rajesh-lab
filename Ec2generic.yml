@@ -159,6 +159,10 @@ Parameters:
   InstanceType:
     Description: EC2 instance type
     Type: String
+
+  ImageId:
+    Description: EC2 instance Image ID
+    Type: String    
         
 
 
@@ -183,7 +187,7 @@ Parameters:
     - Production
     - Test
     - Development
-    - Training
+    - Staging
     - Sandbox
 
   InstanceName:
@@ -192,17 +196,6 @@ Parameters:
     AllowedPattern: '.+'
     ConstraintDescription: This will be used for naming the server. Provide an appropriate value.
 
-  Ec2Maintanence:
-    Description: EC2 instance Power-off-On-ScheduleExpression
-    Type: String
-    AllowedValues:
-    - m-f-8am-6pm
-    - m-f-1am-6pm
-    - mon-fri-24x7
-    - sun-fri-24x7-10am-start
-    - sun-fri-24x7-1am-start
-    - NotApplicable
-    - fri-sun-24x7-6pm-10pm start
 
   SystemOwner:
     Type: String
@@ -212,17 +205,6 @@ Parameters:
     Type: String
     Default: Provide-the-name-of-the-system-admin
 
-  RPOParameter:
-    Description: Sandbox RPO can be set to NotRequired
-    Type: String
-    Default: Bronze
-    AllowedValues:
-    - Bronze
-    - Silver
-    - Gold
-    - Platinum
-    - NotRequired
-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -231,6 +213,7 @@ Metadata:
         Parameters:
           - InstanceName
           - InstanceType
+          - ImageId
           - OperatingClass
           - OperatingSystemType
           - SubnetIds
@@ -251,8 +234,7 @@ Metadata:
           - Environment
           - SystemOwner
           - SystemAdmin
-          - RPOParameter
-          - Ec2Maintanence
+
 
 Mappings:
 
@@ -300,20 +282,6 @@ Mappings:
     centos8:
       SSM: Centos-domain
 
-
-  IOSPatching:
-    Windows:
-      Production: NotApplicable
-      Test: NotApplicable
-      Development: NotApplicable
-      Training: NotApplicable
-      Sandbox: NotApplicable
-    Linux:
-      Production: LinuxProduction
-      Test: LinuxTest
-      Development: LinuxDevelopment
-      Training: LinuxTest
-      Sandbox: LinuxDevelopment
 
 Conditions:
   DataVolume1:
@@ -405,24 +373,22 @@ Resources:
       Roles:
         - Ref: "RootRole"
 
-  getlatestAMI:
-    Type: Custom::getlatestAMI
-    Properties:
-      ssmkey:
-        Fn::FindInMap:
-        - OSTypeToAMIID
-        - Ref: OperatingSystemType
-        - AMI
-      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:CFN-SSM-GetParam"
+  # getlatestAMI:
+  #   Type: Custom::getlatestAMI
+  #   Properties:
+  #     ssmkey:
+  #       Fn::FindInMap:
+  #       - OSTypeToAMIID
+  #       - Ref: OperatingSystemType
+  #       - AMI
+  #     ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:CFN-SSM-GetParam"
 
   WindowsEC2Instance:
     Condition: IsWindows
     Type: AWS::EC2::Instance
     Properties:
       ImageId:
-        Fn::GetAtt:
-        - getlatestAMI
-        - ssmvalue
+        Ref: ImageId
       InstanceType:
         Ref: InstanceType
       SubnetId:
@@ -490,9 +456,6 @@ Resources:
       - Key: Name
         Value:
           Ref: InstanceName
-      - Key: RPO
-        Value:
-          Ref: RPOParameter
       - Key: System Owner
         Value:
           Ref: SystemOwner
@@ -505,9 +468,6 @@ Resources:
           - DomainType
           - Ref: OperatingSystemType
           - SSM
-      - Key: shutdownschedule
-        Value:
-          Ref: Ec2Maintanence
       - Key: OS
         Value:
           Ref: OperatingSystemType
@@ -528,9 +488,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId:
-        Fn::GetAtt:
-        - getlatestAMI
-        - ssmvalue
+        Ref: ImageId      
       InstanceType:
         Ref: InstanceType
       SubnetId:
@@ -579,9 +537,6 @@ Resources:
       - Key: Name
         Value:
           Ref: InstanceName
-      - Key: RPO
-        Value:
-          Ref: RPOParameter
       - Key: System Owner
         Value:
           Ref: SystemOwner
@@ -594,15 +549,6 @@ Resources:
           - DomainType
           - Ref: OperatingSystemType
           - SSM
-      - Key: Patch Group
-        Value:
-          Fn::FindInMap:
-          - IOSPatching
-          - Ref: OperatingClass
-          - Ref: Environment
-      - Key: shutdownschedule
-        Value:
-          Ref: Ec2Maintanence
       - Key: OS
         Value:
           Ref: OperatingSystemType
