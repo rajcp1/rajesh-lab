@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: AWS CloudFormation to create an Amazon EC2 instance
+Description: AWS CloudFormation to create an Amazon EC2 instance with Session Manager Enabled 
 
 Parameters:
 
@@ -14,16 +14,8 @@ Parameters:
     Description: The OperatingSystem type
     Type: String
     AllowedValues:
-    - win2016
     - win2019
-    - win2012
-    - rhel7
-    - rhel8
     - Amazlinux
-    - ubuntu16
-    - ubuntu18
-    - ubuntu20
-    - centos8
 
   RootVolume:
     Description: Choose the Root Volume size appropriately. This cannot be changed at a later time.
@@ -160,10 +152,16 @@ Parameters:
     Description: EC2 instance type
     Type: String
 
-  ImageId:
-    Description: EC2 instance Image ID
-    Type: String    
-     
+  LatestAmiIdWindows2019:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Description:  Do not change this value, this automatically picks up the latest patched Windows 2019 image
+
+  LatestAmiIdAmazonLinux:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'  
+    Description:  Do not change this value, this automatically picks up the latest patched Amazon Linux 2 image 
+    
   SecurityGroupIds:
     Type: List<AWS::EC2::SecurityGroup::Id>
     Description: The list of SecurityGroupIds in your Virtual Private Cloud (VPC)
@@ -179,29 +177,20 @@ Parameters:
     Description: Type the Name of Applicaton to be installed
     Default: Provide-the-name-of-the-application
 
-  Environment:
+  Tier:
+    Description: Deployment tier of the resource
     Type: String
     AllowedValues:
-    - Production
-    - Test
-    - Development
-    - Staging
-    - Sandbox
-
+      - dev
+      - stage
+      - prod
+      - sandbox
+    Default: dev
   InstanceName:
     Type: String
     Description: Type the Name of the server
     AllowedPattern: '.+'
     ConstraintDescription: This will be used for naming the server. Provide an appropriate value.
-
-  SystemOwner:
-    Type: String
-    Default: Provide-the-name-of-the-system-owner
-
-  SystemAdmin:
-    Type: String
-    Default: Provide-the-name-of-the-system-admin
-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -210,8 +199,9 @@ Metadata:
         Parameters:
           - InstanceName
           - InstanceType
-          - ImageId
           - OperatingClass
+          - LatestAmiIdAmazonLinux
+          - LatestAmiIdWindows2019          
           - OperatingSystemType
           - SubnetIds
           - SecurityGroupIds
@@ -224,15 +214,6 @@ Metadata:
           - DataVolume3
           - DataVolume4
           - DataVolume5
-      - Label:
-          default: EC2 Instance Management
-        Parameters:
-          - ApplicationName
-          - Environment
-          - SystemOwner
-          - SystemAdmin
-
-
 Conditions:
   DataVolume1:
     Fn::Not:
@@ -327,8 +308,7 @@ Resources:
     Condition: IsWindows
     Type: AWS::EC2::Instance
     Properties:
-      ImageId:
-        Ref: ImageId
+      ImageId: !Ref LatestAmiIdWindows2019
       InstanceType:
         Ref: InstanceType
       SubnetId:
@@ -387,34 +367,36 @@ Resources:
               </powershell>
 
       Tags:
-      - Key: Application
+      - Key: application
         Value:
           Ref: ApplicationName
-      - Key: Environment
+      - Key: tier
         Value:
-          Ref: Environment
+          Ref: Tier
       - Key: Name
         Value:
           Ref: InstanceName
-      - Key: System Owner
+      - Key: technicalContact
         Value:
-          Ref: SystemOwner
-      - Key: System Admin
+          Ref: TechnicalContact
+      - Key: division
         Value:
-          Ref: SystemAdmin
+          Ref: Division
       - Key: OS
         Value:
           Ref: OperatingSystemType
       - Key: OperatingClass
         Value:
           Ref: OperatingClass
+      - Key: department
+        Value:  
+          Ref: Department    
 
   LinuxEC2Instance:
     Condition: IsUnix
     Type: AWS::EC2::Instance
     Properties:
-      ImageId:
-        Ref: ImageId      
+      ImageId: !Ref LatestAmiIdAmazonLinux     
       InstanceType:
         Ref: InstanceType
       SubnetId:
@@ -454,29 +436,30 @@ Resources:
               # /opt/aws/bin/cfn-init -v -s ${AWS::StackId} -r LinuxEC2Instance --region ${AWS::Region} -c setupcfnhup,renamehost,domainjoin
               # /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource LinuxEC2Instance --region ${AWS::Region}
       Tags:
-      - Key: Application
+      - Key: application
         Value:
           Ref: ApplicationName
-      - Key: Environment
+      - Key: tier
         Value:
-          Ref: Environment
+          Ref: Tier
       - Key: Name
         Value:
           Ref: InstanceName
-      - Key: System Owner
+      - Key: technicalContact
         Value:
-          Ref: SystemOwner
-      - Key: System Admin
+          Ref: TechnicalContact
+      - Key: division
         Value:
-          Ref: SystemAdmin
+          Ref: Division
       - Key: OS
         Value:
           Ref: OperatingSystemType
-      - Key: EC2Createdby
-        Value: dept-ServiceCatalog
       - Key: OperatingClass
         Value:
           Ref: OperatingClass
+      - Key: department
+        Value:  
+          Ref: Department
 
   Volume1:
     Type: AWS::EC2::Volume
