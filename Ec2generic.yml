@@ -163,9 +163,7 @@ Parameters:
   ImageId:
     Description: EC2 instance Image ID
     Type: String    
-        
-
-
+     
   SecurityGroupIds:
     Type: List<AWS::EC2::SecurityGroup::Id>
     Description: The list of SecurityGroupIds in your Virtual Private Cloud (VPC)
@@ -195,7 +193,6 @@ Parameters:
     Description: Type the Name of the server
     AllowedPattern: '.+'
     ConstraintDescription: This will be used for naming the server. Provide an appropriate value.
-
 
   SystemOwner:
     Type: String
@@ -234,53 +231,6 @@ Metadata:
           - Environment
           - SystemOwner
           - SystemAdmin
-
-
-Mappings:
-
-  OSTypeToAMIID:
-    win2016:
-      AMI: ImageBuilder-Org-Latest-win2016
-    win2019:
-      AMI: ImageBuilder-Org-Latest-win2019
-    win2012:
-      AMI: ImageBuilder-Org-Latest-win2012
-    rhel7:
-      AMI: ImageBuilder-Org-Latest-rhel7
-    rhel8:
-      AMI: ImageBuilder-Org-Latest-rhel8
-    Amazlinux:
-      AMI: ImageBuilder-Org-Latest-amazonlinux2
-    ubuntu16:
-      AMI: ImageBuilder-Org-Latest-ubuntu16
-    ubuntu18:
-      AMI: ImageBuilder-Org-Latest-ubuntu18
-    ubuntu20:
-      AMI: ImageBuilder-Org-Latest-ubuntu20
-    centos8:
-      AMI: ImageBuilder-Org-Latest-centos8
-
-  DomainType:
-    win2016:
-      SSM: Windows-domain
-    win2019:
-      SSM: Windows-domain
-    win2012:
-      SSM: Windows-domain
-    rhel7:
-      SSM: Linux-domain
-    rhel8:
-      SSM: Linux8-domain
-    Amazlinux:
-      SSM: Linux-domain
-    ubuntu16:
-      SSM: Ubuntu-domain
-    ubuntu18:
-      SSM: Ubuntu-domain
-    ubuntu20:
-      SSM: Ubuntu-domain
-    centos8:
-      SSM: Centos-domain
 
 
 Conditions:
@@ -373,16 +323,6 @@ Resources:
       Roles:
         - Ref: "RootRole"
 
-  # getlatestAMI:
-  #   Type: Custom::getlatestAMI
-  #   Properties:
-  #     ssmkey:
-  #       Fn::FindInMap:
-  #       - OSTypeToAMIID
-  #       - Ref: OperatingSystemType
-  #       - AMI
-  #     ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:CFN-SSM-GetParam"
-
   WindowsEC2Instance:
     Condition: IsWindows
     Type: AWS::EC2::Instance
@@ -462,23 +402,9 @@ Resources:
       - Key: System Admin
         Value:
           Ref: SystemAdmin
-      - Key: Domain
-        Value:
-          Fn::FindInMap:
-          - DomainType
-          - Ref: OperatingSystemType
-          - SSM
       - Key: OS
         Value:
           Ref: OperatingSystemType
-      - Key: EC2Createdby
-        Value: dept-SNServiceCatalog
-      - Key: AmiID
-        Value:
-          Fn::FindInMap:
-          - OSTypeToAMIID
-          - Ref: OperatingSystemType
-          - AMI
       - Key: OperatingClass
         Value:
           Ref: OperatingClass
@@ -543,23 +469,11 @@ Resources:
       - Key: System Admin
         Value:
           Ref: SystemAdmin
-      - Key: Domain
-        Value:
-          Fn::FindInMap:
-          - DomainType
-          - Ref: OperatingSystemType
-          - SSM
       - Key: OS
         Value:
           Ref: OperatingSystemType
       - Key: EC2Createdby
         Value: dept-ServiceCatalog
-      - Key: AmiID
-        Value:
-          Fn::FindInMap:
-          - OSTypeToAMIID
-          - Ref: OperatingSystemType
-          - AMI
       - Key: OperatingClass
         Value:
           Ref: OperatingClass
