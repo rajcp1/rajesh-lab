@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation to create an Amazon EC2 Instance Profile to keep this as a unique name per instance
+
+Parameters:
+  InstanceName:
+    Type: String
+    Description: Type the Name of the server
+    AllowedPattern: '.+'
+    ConstraintDescription: This will be used for naming the instance profile
+Resources:
+  RootRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ${InstanceName}-Instancerole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy'
+        - 'arn:aws:iam::aws:policy/CloudWatchFullAccess'
+        - 'arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy'
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - 'arn:aws:iam::aws:policy/AmazonSSMDirectoryServiceAccess'
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM'
+        - 'arn:aws:iam::aws:policy/AmazonInspectorFullAccess'
+
+  InstanceInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      InstanceProfileName: !Sub ${InstanceName}-InstanceProfile
+      Roles:
+        - !Ref RootRole
+
+  InstancePermissionsPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: !Sub ${InstanceName}-InstancePermissionsPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - 'cloudwatch:PutMetricAlarm'
+              - 'kms:Decrypt'
+              - 'ec2:DescribeInstances'
+              - 'ec2:CreateTags'
+            Resource: "*"
+      Roles:
+        - Ref: "RootRole"
+
+ 
